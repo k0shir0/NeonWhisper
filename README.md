@@ -1,4 +1,3 @@
-# Thrillshare-Form-Exploit
 # 🛡️ CORS Misconfiguration PoC — Neon Whisper
 
 **This repository is a vulnerability publication for security research and defensive education only.**
