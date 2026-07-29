@@ -470,34 +470,34 @@
             const HARDCODED_CHOICE_IDS = ['96110', '96111', '96112', '96113', '96114', '96115'];
 
             function buildHardcodedFormData() {
-                const fd = new FormData();
-                // 77661 - First Name
-                fd.append('data[attributes][answers][][element_id]', '77661');
-                fd.append('data[attributes][answers][][answer_text]', 'Exploited NeonWhisper');
-                // 77662 - Last Name
-                fd.append('data[attributes][answers][][element_id]', '77662');
-                fd.append('data[attributes][answers][][answer_text]', 'Exploited NeonWhisper');
-                // 77663 - Single choice
-                fd.append('data[attributes][answers][][element_id]', '77663');
-                fd.append('data[attributes][answers][][element_choice_id]', '96108');
-                // 77664 - Email
-                fd.append('data[attributes][answers][][element_id]', '77664');
-                fd.append('data[attributes][answers][][answer_text]', 'Exploited NeonWhisper');
-                // 77665 - Phone
-                fd.append('data[attributes][answers][][element_id]', '77665');
-                fd.append('data[attributes][answers][][answer_text]', 'Exploited NeonWhisper');
-                // 77666 - Multi-select (6 choices)
-                HARDCODED_CHOICE_IDS.forEach(cid => {
-                    fd.append('data[attributes][answers][][element_id]', '77666');
-                    fd.append('data[attributes][answers][][element_choice_id]', cid);
-                });
-                // 77667 - Text area
-                fd.append('data[attributes][answers][][element_id]', '77667');
-                fd.append('data[attributes][answers][][answer_text]', 'Exploited NeonWhisper');
-                // viewed_at
-                fd.append('data[attributes][viewed_at]', new Date().toISOString());
-                return fd;
-            }
+    const fd = new FormData();
+    // 77661 - First Name
+    fd.append('data[attributes][answers][][element_id]', '77661');
+    fd.append('data[attributes][answers][][answer_text]', 'Neon');
+    // 77662 - Last Name
+    fd.append('data[attributes][answers][][element_id]', '77662');
+    fd.append('data[attributes][answers][][answer_text]', 'Whisper');
+    // 77663 - Single choice (unchanged)
+    fd.append('data[attributes][answers][][element_id]', '77663');
+    fd.append('data[attributes][answers][][element_choice_id]', '96108');
+    // 77664 - Email (now valid)
+    fd.append('data[attributes][answers][][element_id]', '77664');
+    fd.append('data[attributes][answers][][answer_text]', 'Neon@Whisper.com');
+    // 77665 - Phone (valid format)
+    fd.append('data[attributes][answers][][element_id]', '77665');
+    fd.append('data[attributes][answers][][answer_text]', '123-456-7890');
+    // 77666 - Multi-select (unchanged)
+    HARDCODED_CHOICE_IDS.forEach(cid => {
+        fd.append('data[attributes][answers][][element_id]', '77666');
+        fd.append('data[attributes][answers][][element_choice_id]', cid);
+    });
+    // 77667 - Text area (descriptive)
+    fd.append('data[attributes][answers][][element_id]', '77667');
+    fd.append('data[attributes][answers][][answer_text]', 'Exploited by NeonWhisper');
+    // viewed_at
+    fd.append('data[attributes][viewed_at]', new Date().toISOString());
+    return fd;
+}
 
             // DOM refs
             const statTotal = document.getElementById('statTotal');
